@@ -1,15 +1,127 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
+ 
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Catalogo {
+  id          Int      @id @default(autoincrement())
+  tipo        String   @db.VarChar(50)
+  nombre      String   @db.VarChar(100)
+  descripcion String?
+
+  // Relaciones
+  productos_tipo          Producto[]     @relation("tipo_producto")
+  productos_estado        Producto[]     @relation("estado_producto")
+  activos_categoria       Activo[]       @relation("categoria_activo")
+  activos_estado          Activo[]       @relation("estado_activo")
+  requisiciones_estado    Requisicion[]  @relation("estado_requisicion")
+  movimientos_tipo        Movimiento[]   @relation("tipo_movimiento")
+  movimientos_centroCosto Movimiento[]   @relation("centro_costo")
+  usuarios_roles          Usuario[]      @relation("rol_usuario")
+}
+
+model Producto {
+  producto_id        Int       @id @default(autoincrement())
+  tipo_id            Int
+  marca              String    @db.VarChar(100)
+  modelo             String?   @db.VarChar(100)
+  especificacion     String?
+  imagen_url         String?   @db.VarChar(255)
+  precio_unitario    Decimal   @db.Decimal(10,2)
+  stock_actual       Int
+  proveedor_id       Int?
+  fecha_ultima_compra DateTime?
+  estado_id          Int
+
+  tipo   Catalogo @relation("tipo_producto", fields: [tipo_id], references: [id])
+  estado Catalogo @relation("estado_producto", fields: [estado_id], references: [id])
+  movimientos Movimiento[]
+  requisiciones_detalle RequisicionDetalle[]
+}
+
+model Activo {
+  activo_id      Int     @id @default(autoincrement())
+  categoria_id   Int
+  marca          String  @db.VarChar(100)
+  modelo         String? @db.VarChar(100)
+  numero_serie   String? @db.VarChar(100)
+  ubicacion      String? @db.VarChar(100)
+  responsable_id Int
+  estado_id      Int
+
+  categoria   Catalogo @relation("categoria_activo", fields: [categoria_id], references: [id])
+  estado      Catalogo @relation("estado_activo", fields: [estado_id], references: [id])
+  responsable Usuario  @relation("responsable_usuario", fields: [responsable_id], references: [usuario_id])
+}
+
+model Requisicion {
+  requisicion_id Int      @id @default(autoincrement())
+  solicitante_id Int
+  area           String   @db.VarChar(100)
+  fecha          DateTime @db.Date
+  estado_id      Int
+  autorizador_id Int?
+  comentarios    String?
+  cargo_camion   String?  @db.VarChar(100)
+  num_camion_eta String?  @db.VarChar(50)
+  chofer         String?  @db.VarChar(50)
+  tipo_requisicion String @db.VarChar(50)
+  folio          String?  @db.VarChar(50)
+  descripcion_os String?
+
+  solicitante Usuario  @relation("solicitante_usuario", fields: [solicitante_id], references: [usuario_id])
+  estado      Catalogo @relation("estado_requisicion", fields: [estado_id], references: [id])
+  autorizador Usuario? @relation("autorizador_requisicion", fields: [autorizador_id], references: [usuario_id])
+
+  detalles RequisicionDetalle[]
+}
+
+model RequisicionDetalle {
+  detalle_id     Int    @id @default(autoincrement())
+  requisicion_id Int
+  producto_id    Int
+  cantidad       Int
+  descripcion    String?
+
+  requisicion Requisicion @relation(fields: [requisicion_id], references: [requisicion_id])
+  producto    Producto    @relation(fields: [producto_id], references: [producto_id])
+}
+
+model Movimiento {
+  movimiento_id  Int     @id @default(autoincrement())
+  tipo_id        Int
+  producto_id    Int
+  cantidad       Int
+  responsable_id Int
+  centro_costo_id Int
+  fecha          DateTime @default(now())
+  precio_unitario Decimal  @db.Decimal(10,2)
+  observaciones   String?
+
+  tipo        Catalogo @relation("tipo_movimiento", fields: [tipo_id], references: [id])
+  producto    Producto @relation(fields: [producto_id], references: [producto_id])
+  responsable Usuario  @relation("responsable_movimiento", fields: [responsable_id], references: [usuario_id])
+  centro_costo Catalogo @relation("centro_costo", fields: [centro_costo_id], references: [id])
+}
+
+model Usuario {
+  usuario_id       Int     @id @default(autoincrement())
+  nombre           String  @db.VarChar(100)
+  correo           String  @unique @db.VarChar(100)
+  contrasena_hash  String  @db.VarChar(255)
+  rol_id           Int
+  activo           Boolean @default(true)
+
+  rol   Catalogo @relation("rol_usuario", fields: [rol_id], references: [id])
+
+  // Relaciones inversas
+  activos_responsable Activo[]       @relation("responsable_usuario")
+  requisiciones_solicitadas Requisicion[] @relation("solicitante_usuario")
+  requisiciones_autorizadas Requisicion[] @relation("autorizador_requisicion")
+  movimientos_realizados Movimiento[] @relation("responsable_movimiento")
 }
