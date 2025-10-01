@@ -137,3 +137,20 @@ export const refreshToken = async (req:Request, res:Response) =>{
     
 }
 
+export const logout = async (req:Request, res: Response )=>{
+  const {token} = req.body;
+
+  if (!token){
+    return res.status(404).json({error: "token no existe"});
+  }
+
+  const refreshToken = await prisma.refreshToken.findUnique({where: {token:token}});
+
+  if (!refreshToken){
+    return res.status(404).json({error: "Refresh Token no encontrado"})
+  }else{
+    await prisma.refreshToken.delete({where:{token:token}})
+  };
+
+  return res.json({ message: "Sesión cerrada correctamente" });
+}
