@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 import { prisma } from "../prismaClient";
 import { error } from "console";
 import { access } from 'fs';
+import { userInfo } from 'os';
 
 // LOGIN
 export const login = async (req: Request, res: Response) => {
@@ -62,31 +63,7 @@ export const login = async (req: Request, res: Response) => {
 };
 
 
-export const register = async (req:Request, res:Response) =>{
-    
-       const {nombre, correo, rol_id, contrasena_hash} = req.body;
 
-       if (!nombre || !correo ||!rol_id || !contrasena_hash){
-        return res.status(400).json({error: "Faltan datos"});
-       };
-
-       const existingUser = await prisma.usuario.findUnique({where: {correo} });
-       if (existingUser){
-        return res.status(409).json({error: "Correo ya registrado"});
-       };
-       const hash = await bcrypt.hash(contrasena_hash, 10
-       )
-
-       const newUser = await prisma.usuario.create({
-        data:{
-            nombre,
-            correo,
-            rol_id,
-            contrasena_hash: hash,
-        },
-       });
-       res.status(201).json({message:"Usuario creado ", usuario: newUser});
-};
 //Usar este endpoint para refrescar en el front en cuanto detecte un 401
 export const refreshToken = async (req:Request, res:Response) =>{
     const  {token} = req.body;
@@ -153,4 +130,21 @@ export const logout = async (req:Request, res: Response )=>{
   };
 
   return res.json({ message: "Sesión cerrada correctamente" });
+}
+
+export const me = async (req:Request, res: Response) => {
+  
+  const userId = (req as any).user.id;
+
+  const user = await prisma.usuario.findUnique({
+    where:{usuario_id:userId},
+    select: {usuario_id:true, nombre:true, correo:true, rol_id:true, activo: true}  });
+
+  if (!user){
+    return res.status(404).json({error: "Usuario no encontrado"})
+
+  }
+
+  return res.json(user);
+
 }
