@@ -41,7 +41,7 @@ export const login = async (req: Request, res: Response) => {
     { expiresIn: "7d" }
   );
 
-  // 👉 Guardar refresh token en la DB
+  
   await prisma.refreshToken.create({
     data: {
       token: refreshToken,
