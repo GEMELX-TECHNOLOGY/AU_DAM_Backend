@@ -38,8 +38,8 @@ model Producto {
   fecha_ultima_compra DateTime?
   estado_id          Int
 
-  tipo   Catalogo @relation("tipo_producto", fields: [tipo_id], references: [id])
-  estado Catalogo @relation("estado_producto", fields: [estado_id], references: [id])
+  tipo   Catalogo @relation("tipo_producto", fields: [tipo_id], references: [id], onDelete: Cascade)
+  estado Catalogo @relation("estado_producto", fields: [estado_id], references: [id], onDelete: Cascade)
   movimientos Movimiento[]
   requisiciones_detalle RequisicionDetalle[]
 }
@@ -54,9 +54,9 @@ model Activo {
   responsable_id Int
   estado_id      Int
 
-  categoria   Catalogo @relation("categoria_activo", fields: [categoria_id], references: [id])
-  estado      Catalogo @relation("estado_activo", fields: [estado_id], references: [id])
-  responsable Usuario  @relation("responsable_usuario", fields: [responsable_id], references: [usuario_id])
+  categoria   Catalogo @relation("categoria_activo", fields: [categoria_id], references: [id], onDelete: Cascade)
+  estado      Catalogo @relation("estado_activo", fields: [estado_id], references: [id], onDelete: Cascade)
+  responsable Usuario  @relation("responsable_usuario", fields: [responsable_id], references: [usuario_id], onDelete: Cascade)
 }
 
 model Requisicion {
@@ -74,9 +74,9 @@ model Requisicion {
   folio          String?  @db.VarChar(50)
   descripcion_os String?
 
-  solicitante Usuario  @relation("solicitante_usuario", fields: [solicitante_id], references: [usuario_id])
-  estado      Catalogo @relation("estado_requisicion", fields: [estado_id], references: [id])
-  autorizador Usuario? @relation("autorizador_requisicion", fields: [autorizador_id], references: [usuario_id])
+  solicitante Usuario  @relation("solicitante_usuario", fields: [solicitante_id], references: [usuario_id], onDelete: Cascade)
+  estado      Catalogo @relation("estado_requisicion", fields: [estado_id], references: [id], onDelete: Cascade)
+  autorizador Usuario? @relation("autorizador_requisicion", fields: [autorizador_id], references: [usuario_id], onDelete: Cascade)
 
   detalles RequisicionDetalle[]
 }
@@ -88,8 +88,8 @@ model RequisicionDetalle {
   cantidad       Int
   descripcion    String?
 
-  requisicion Requisicion @relation(fields: [requisicion_id], references: [requisicion_id])
-  producto    Producto    @relation(fields: [producto_id], references: [producto_id])
+  requisicion Requisicion @relation(fields: [requisicion_id], references: [requisicion_id], onDelete: Cascade)
+  producto    Producto    @relation(fields: [producto_id], references: [producto_id], onDelete: Cascade)
 }
 
 model Movimiento {
@@ -103,10 +103,10 @@ model Movimiento {
   precio_unitario Decimal  @db.Decimal(10,2)
   observaciones   String?
 
-  tipo        Catalogo @relation("tipo_movimiento", fields: [tipo_id], references: [id])
-  producto    Producto @relation(fields: [producto_id], references: [producto_id])
-  responsable Usuario  @relation("responsable_movimiento", fields: [responsable_id], references: [usuario_id])
-  centro_costo Catalogo @relation("centro_costo", fields: [centro_costo_id], references: [id])
+  tipo        Catalogo @relation("tipo_movimiento", fields: [tipo_id], references: [id], onDelete: Cascade)
+  producto    Producto @relation(fields: [producto_id], references: [producto_id], onDelete: Cascade)
+  responsable Usuario  @relation("responsable_movimiento", fields: [responsable_id], references: [usuario_id], onDelete: Cascade)
+  centro_costo Catalogo @relation("centro_costo", fields: [centro_costo_id], references: [id], onDelete: Cascade)
 }
 
 model Usuario {
@@ -117,11 +117,22 @@ model Usuario {
   rol_id           Int
   activo           Boolean @default(true)
 
-  rol   Catalogo @relation("rol_usuario", fields: [rol_id], references: [id])
+  rol   Catalogo @relation("rol_usuario", fields: [rol_id], references: [id], onDelete: Cascade)
 
   // Relaciones inversas
   activos_responsable Activo[]       @relation("responsable_usuario")
   requisiciones_solicitadas Requisicion[] @relation("solicitante_usuario")
   requisiciones_autorizadas Requisicion[] @relation("autorizador_requisicion")
   movimientos_realizados Movimiento[] @relation("responsable_movimiento")
+  refreshTokens RefreshToken[]
+}
+
+model RefreshToken {
+  id         Int      @id @default(autoincrement())
+  token      String   @unique
+  usuario_id Int
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+
+  usuario Usuario @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade)
 }
