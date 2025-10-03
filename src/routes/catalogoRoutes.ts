@@ -1,10 +1,8 @@
 import { Router } from "express";
-import {register } from "../controllers/userController";
+import {roles} from "../controllers/rolController";
 import { verifyToken } from "../middleware/authMiddleware";
-
 
 const router = Router();
 
-router.post("/register", register);
 
 export default router;
