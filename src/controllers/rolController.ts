@@ -24,7 +24,7 @@ export const roles = async (req:Request, res:Response)=>{
 
          return res.status(201).json({success: true, data: roles});
 
-    }catch (erro){
+    }catch (error){
         console.error("Roles error",error);
         return res.status(500).json({success: false, error:"Error al obtener roles"})
     }
