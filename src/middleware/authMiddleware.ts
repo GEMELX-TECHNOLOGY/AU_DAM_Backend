@@ -1,10 +1,22 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-import { prisma } from '../prismaClient';
+import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
+
+
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        usuario_id: number;
+        rol_id: number;
+        isAdmin?: boolean;
+      };
+    }
+  }
+}
 
 export const verifyToken = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // 'Bearer <token>'
+  const token = authHeader?.split(' ')[1]; // 'Bearer <token>'
 
   if (!token) {
     return res.status(401).json({ error: 'Acceso denegado: token faltante' });
@@ -12,12 +24,16 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
 
   try {
     const secret = process.env.JWT_SECRET || 'milpinas';
-    const payload = jwt.verify(token, secret);
+    const payload = jwt.verify(token, secret) as { id: number; rol_id: number };
 
-    // Guardamos la info del usuario en req.user para usar después
-    (req as any).user = payload;
 
-    next(); // pasa al siguiente middleware o ruta
+    req.user = {
+      usuario_id: payload.id,    
+      rol_id: payload.rol_id,
+      isAdmin: payload.rol_id === 1 
+    };
+
+    next();
   } catch (err) {
     return res.status(401).json({ error: 'Token inválido' });
   }
@@ -25,7 +41,7 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction) => 
 
 export const verifyRole = (roles: number[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    const user = (req as any).user;
+    const user = req.user;
 
     if (!user) {
       return res.status(401).json({ error: 'Usuario no autenticado' });
@@ -35,7 +51,6 @@ export const verifyRole = (roles: number[]) => {
       return res.status(403).json({ error: 'Acceso denegado: rol insuficiente' });
     }
 
-    next(); // todo bien, pasa a la ruta
+    next();
   };
 };
-

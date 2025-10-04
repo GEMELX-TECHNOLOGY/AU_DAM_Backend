@@ -118,6 +118,7 @@ model Usuario {
   activo           Boolean @default(true)
 
   rol   Catalogo @relation("rol_usuario", fields: [rol_id], references: [id], onDelete: Cascade)
+   bitacora_registros        Bitacora[]
 
   // Relaciones inversas
   activos_responsable Activo[]       @relation("responsable_usuario")
@@ -133,6 +134,17 @@ model RefreshToken {
   usuario_id Int
   createdAt  DateTime @default(now())
   expiresAt  DateTime
+
+  usuario Usuario @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade)
+}
+model Bitacora {
+  id          Int      @id @default(autoincrement())
+  usuario_id  Int
+  accion      String   @db.VarChar(100)   
+  entidad     String   @db.VarChar(100)  
+  entidad_id  Int?
+  descripcion String?
+  fecha       DateTime @default(now())
 
   usuario Usuario @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade)
 }
