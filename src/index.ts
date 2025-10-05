@@ -4,6 +4,7 @@ import authRoutes from "./routes/authRoutes";
 import rolRoutes from "./routes/rolRoutes";
 import userRoutes from "./routes/userRoutes"
 import catalogoRoutes from "./routes/catalogoRoutes";
+import productaRoutes from "./routes/productaRoutes";
 
 dotenv.config();
 const app = express();
@@ -13,6 +14,7 @@ app.use("/auth", authRoutes);
 app.use('/users', userRoutes);
 app.use('/roles', rolRoutes);
 app.use('/catalogo', catalogoRoutes);
+app.use("/products",productaRoutes);
 
 
 app.get("/", (req, res) => res.send("Servidor funcionando =)"));

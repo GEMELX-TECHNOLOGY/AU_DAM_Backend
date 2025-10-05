@@ -34,7 +34,7 @@ model Producto {
   imagen_url         String?   @db.VarChar(255)
   precio_unitario    Decimal   @db.Decimal(10,2)
   stock_actual       Int
-  proveedor_id       Int?
+  proveedor_id       Int
   fecha_ultima_compra DateTime?
   estado_id          Int
 
@@ -42,6 +42,7 @@ model Producto {
   estado Catalogo @relation("estado_producto", fields: [estado_id], references: [id], onDelete: Cascade)
   movimientos Movimiento[]
   requisiciones_detalle RequisicionDetalle[]
+  proveedor Proveedor @relation("proveedor_producto", fields:[proveedor_id],references: [proveedor_id], onDelete: Cascade)
 }
 
 model Activo {
@@ -147,4 +148,15 @@ model Bitacora {
   fecha       DateTime @default(now())
 
   usuario Usuario @relation(fields: [usuario_id], references: [usuario_id], onDelete: Cascade)
+}
+model Proveedor {
+  proveedor_id Int       @id @default(autoincrement())
+  nombre       String    @db.VarChar(100)
+  contacto     String?   @db.VarChar(100)
+  telefono     String?   @db.VarChar(20)
+  email        String?   @db.VarChar(100)
+  direccion    String?   @db.VarChar(255)
+  activo       Boolean   @default(true)
+
+  productos Producto[]   @relation("proveedor_producto")
 }
