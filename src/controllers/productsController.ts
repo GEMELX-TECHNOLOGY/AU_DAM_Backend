@@ -64,3 +64,62 @@ export const get_product_id = async (req:Request, res:Response)=>{
     }
 
 }
+
+export const create_product =async (req:Request, res:Response) =>{
+    const {
+        tipo_id,
+        marca,
+        modelo,
+        especificacion,
+        imagen_url,
+        precio_unitario,
+        stock_actual,
+        proveedor_id,
+        fecha_ultima_compra,
+        estado_id
+    }= req.body;
+    
+    if(!tipo_id || !marca || !modelo ||!precio_unitario ||!proveedor_id||!estado_id){
+        return res.status(400).json({success:false, message:"faltan campos obligatorios"})
+    };
+
+    try{
+        const newProduct = await prisma.producto.create({
+            data:{
+                tipo_id:Number(tipo_id),
+                marca,
+                modelo,
+                especificacion,imagen_url,
+                precio_unitario:Number(precio_unitario),
+                stock_actual:Number(stock_actual),
+                proveedor_id:Number(proveedor_id),
+                fecha_ultima_compra: new Date(fecha_ultima_compra),
+                estado_id:Number(estado_id),
+                
+            },
+            include:{
+                tipo:true,
+                estado:true,
+                proveedor:true
+            }
+        });
+
+        await prisma.bitacora.create({
+            data:{
+                usuario_id:req.user?.usuario_id || 1,
+                accion:"CREATE",
+                entidad:"Producto",
+                entidad_id:newProduct.producto_id,
+                descripcion:`el usuario ${req.user?.usuario_id} creo el producto ${newProduct.marca} ${newProduct.modelo}`
+            }
+        });
+
+        return res.status(201).json({
+            success:true,
+            data: newProduct
+        })
+    }catch(error){
+        console.error("Error al crear el producto",error)
+        return res.status(500).json({success:false, error})
+    }
+}
