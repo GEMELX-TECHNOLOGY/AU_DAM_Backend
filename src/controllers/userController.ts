@@ -96,6 +96,15 @@ export const register = async (req: Request, res: Response) => {
         activo: true,
       },
     });
+            await prisma.bitacora.create({
+            data:{
+                usuario_id:req.user?.usuario_id || 1,
+                accion:"CREATE",
+                entidad:"Usuario",
+                entidad_id:newUser.usuario_id,
+                descripcion:`el usuario ${req.user?.usuario_id} creo el usuario ${newUser.nombre} ${newUser.correo}`
+            }
+        });
 
     res.status(201).json({ message: "Usuario creado", usuario: newUser });
   } catch (error) {
@@ -131,6 +140,16 @@ export const update_user = async(req:Request,res:Response)=>{
             },
             data: dataToUpdate,
         });
+
+        await prisma.bitacora.create({
+          data:{
+            usuario_id:req.user?.usuario_id|| 1,
+            accion:"UPDATE",
+            entidad: "Usuario",
+            entidad_id:userUpdate.usuario_id,
+            descripcion: `el usuario ${req.user?.usuario_id} actualizo el usuario ${userUpdate.nombre} con el correo: ${userUpdate.correo}`
+          }
+        })
         return res.json({success: true, data:userUpdate});
     }catch(error){
         console.error("Error al actualizar usuario")
@@ -202,6 +221,15 @@ export const update_password = async (req: Request, res: Response) => {
 
     await prisma.refreshToken.deleteMany({ where: { usuario_id: userId } });
 
+    await prisma.bitacora.create({
+     data:{
+       usuario_id:req.user?.usuario_id || 1,
+       accion:"UPDATE",
+       entidad:"Password",
+       entidad_id:newPassword.userId,
+       descripcion:`el usuario ${req.user?.usuario_id} actualizo la password `
+      }
+    });  
     return res.status(200).json({
       success: true,
       message: "Contraseña actualizada con éxito, vuelve a iniciar sesión",
