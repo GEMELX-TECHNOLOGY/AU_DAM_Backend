@@ -5,6 +5,7 @@ import rolRoutes from "./routes/rolRoutes";
 import userRoutes from "./routes/userRoutes"
 import catalogoRoutes from "./routes/catalogoRoutes";
 import productaRoutes from "./routes/productaRoutes";
+import movimientoRoutes from "./routes/movimientoRoutes";
 
 dotenv.config();
 const app = express();
@@ -15,7 +16,7 @@ app.use('/users', userRoutes);
 app.use('/roles', rolRoutes);
 app.use('/catalogo', catalogoRoutes);
 app.use("/products",productaRoutes);
-
+app.use("/movimiento",movimientoRoutes);
 
 app.get("/", (req, res) => res.send("Servidor funcionando =)"));
 
