@@ -35,3 +35,37 @@ export const type_catalogo = async(req:Request, res: Response)=>{
     }
 }
 
+export const post_catalogo = async (req:Request, res:Response)=>{
+    const {tipo, nombre, descripcion}= req.body;
+
+    if (!tipo || !nombre || !descripcion){
+        return res.status(400).json({success:false, message:"faltan campos"});
+
+    };
+    try{
+        const newCatalogo = await prisma.catalogo.create({
+            data:{
+                tipo,
+                nombre,
+                descripcion
+            },
+            
+        });
+
+        await prisma.bitacora.create({
+            data:{
+                usuario_id:req.user?.usuario_id || 1,
+                accion:"CREATE",
+                entidad:"CATALOGO",
+                entidad_id:newCatalogo.id,
+                descripcion:`el usuario ${req.user?.usuario_id} creo el catalogo ${newCatalogo.tipo} con nombre: ${newCatalogo.nombre}`
+            }
+
+        });
+        return res.status(201).json({success:true, data:newCatalogo})
+
+    }catch(error){
+        console.error("Error al crear catalogo");
+        return res.status(500).json({sucess:false, error})
+    }
+}
