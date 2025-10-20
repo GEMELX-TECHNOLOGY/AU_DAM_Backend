@@ -7,6 +7,8 @@ import { error } from "console";
 import { access } from 'fs';
 import { userInfo } from 'os';
 
+
+
 // LOGIN
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -27,22 +29,29 @@ export const login = async (req: Request, res: Response) => {
 
   const isMatch = await bcrypt.compare(password, user.contrasena_hash);
   if (!isMatch) {
-    return res.status(401).json({ error: "Contrasena incorrecta" });
+    return res.status(401).json({ error: "Contraseña incorrecta" });
   }
 
+  //  Access Token con toda la info del usuario
   const accessToken = jwt.sign(
-    { id: user.usuario_id, email: user.correo, rol_id: user.rol_id },
+    {
+      id: user.usuario_id,
+      email: user.correo,
+      nombre: user.nombre,
+      rol_id: user.rol_id,
+    },
     process.env.JWT_SECRET!,
     { expiresIn: "15m" }
   );
 
+  //  Refresh Token con solo el ID
   const refreshToken = jwt.sign(
     { id: user.usuario_id },
     process.env.JWT_REFRESH_SECRET!,
     { expiresIn: "7d" }
   );
 
-  
+
   await prisma.refreshToken.create({
     data: {
       token: refreshToken,
@@ -51,16 +60,39 @@ export const login = async (req: Request, res: Response) => {
     },
   });
 
+  //  cookies 
+  res.cookie("accessToken", accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 15 * 60 * 1000,
+  });
+
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  //  Respuesta JSON mixta para Postman y front
   res.json({
-    accessToken,
-    refreshToken,
+    message: "Inicio de sesión exitoso",
     usuario: {
-      usuario_id: user.usuario_id,
+      id: user.usuario_id,
       nombre: user.nombre,
+      correo: user.correo,
       rol_id: user.rol_id,
+    },
+    // Para pruebas en postman
+    tokens: {
+      accessToken,
+      refreshToken,
     },
   });
 };
+
+
 
 
 
